@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일진일기 MVP v3.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; color: #334155; }
+        .tab-btn { padding-bottom: 4px; border-bottom: 2px solid transparent; color: #94a3b8; transition: all 0.2s; cursor: pointer; }
+        .tab-btn.active { border-bottom: 2px solid #6366f1; color: #6366f1; font-weight: bold; }
+        .mood-selected { background-color: #eef2ff; border: 2px solid #6366f1; transform: scale(1.1); }
+        .month-chip { padding: 4px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #e2e8f0; background: white; }
+        .month-chip.active { background: #6366f1; color: white; border-color: #6366f1; }
+        .ai-box { position: relative; border-radius: 20px; background: linear-gradient(145deg, #ffffff, #f1f5f9); border: 1px solid #e2e8f0; }
+        .ai-box::before { content: 'MENTOR'; position: absolute; top: -10px; left: 20px; background: #6366f1; color: white; font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="max-w-5xl mx-auto min-h-screen flex flex-col shadow-2xl bg-white">
+    <!-- 헤더 -->
+    <header class="px-8 py-6 flex justify-between items-center border-b sticky top-0 bg-white z-30">
+        <h1 class="text-xl font-black text-indigo-600 tracking-tighter cursor-pointer" onclick="location.reload()">日辰日記</h1>
+        <nav class="flex gap-8 text-sm font-bold">
+            <button id="tabToday" class="tab-btn active">오늘의 기록</button>
+            <button id="tabList" class="tab-btn">나의 보관소</button>
+            <button id="tabSetting" class="tab-btn">내 설정</button>
+        </nav>
+    </header>
+
+    <!-- 명식 바 -->
+    <div class="bg-slate-50 px-8 py-3 border-b flex justify-between items-center text-[11px]">
+        <div class="flex gap-4">
+            <span class="text-gray-400 font-bold uppercase tracking-widest">Master Saju</span>
+            <span id="displaySaju" class="font-bold text-slate-700">정보를 입력해주세요</span>
+        </div>
+        <div id="displayZodiac" class="bg-white border px-3 py-1 rounded-full text-indigo-600 font-black">-</div>
+    </div>
+
+    <!-- 1. 오늘의 기록 탭 -->
+    <main id="viewToday" class="p-8 space-y-8 block">
+        <section class="flex flex-col gap-6">
+            <div class="flex justify-between items-center">
+                <input type="date" id="datePicker" class="p-2 border-none bg-slate-100 rounded-lg text-sm font-bold outline-none focus:ring-2 ring-indigo-500">
+                <div class="flex gap-4">
+                    <div class="text-center"><p class="text-[9px] text-gray-400 font-bold uppercase">Year</p><h3 id="shinsalYear" class="text-xs font-bold text-slate-500">-</h3></div>
+                    <div class="text-center"><p class="text-[9px] text-gray-400 font-bold uppercase">Month</p><h3 id="shinsalMonth" class="text-xs font-bold text-slate-500">-</h3></div>
+                    <div class="text-center px-4 border-l"><p class="text-[9px] text-indigo-500 font-black uppercase">Today</p><h3 id="shinsalDay" class="text-sm font-black text-indigo-600">-</h3></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <!-- 일기 작성 -->
+            <section class="space-y-6">
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-tighter mb-4">Daily Observation</h3>
+                    <textarea id="diaryText" class="w-full h-52 p-6 bg-slate-50 rounded-3xl outline-none focus:ring-2 ring-indigo-100 text-sm leading-relaxed border-none shadow-inner" placeholder="무슨 일이 있었나요? 어떤 기운이 당신을 움직였나요?"></textarea>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div id="moodButtons" class="flex gap-3">
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all hover:bg-indigo-50" data-mood="😄">😄</button>
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all hover:bg-indigo-50" data-mood="🙂">🙂</button>
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all hover:bg-indigo-50" data-mood="😐">😐</button>
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all hover:bg-indigo-50" data-mood="😔">😔</button>
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl text-2xl transition-all hover:bg-indigo-50" data-mood="😫">😫</button>
+                    </div>
+                    <button id="saveBtn" class="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all">저장 및 복기</button>
+                </div>
+            </section>
+
+            <!-- 학습 가이드 & 노트 -->
+            <section id="insightSection" class="flex flex-col space-y-6 transition-all opacity-40">
+                <div class="ai-box p-7">
+                    <div id="aiComment" class="text-sm text-slate-600 leading-relaxed font-medium">
+                        일기를 저장하시면 오늘의 신살과 일상을 연결한 명리 가이드가 표시됩니다.
+                    </div>
+                    <div id="youtubeSection" class="mt-4 hidden border-t pt-4">
+                        <a id="youtubeLink" target="_blank" class="text-[11px] text-red-500 font-bold hover:underline">📺 이 글자의 원리 심화 학습</a>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50/50 p-7 rounded-3xl border border-indigo-100 border-dashed">
+                    <h3 class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">My Study Note</h3>
+                    <textarea id="studyMemo" class="w-full h-40 bg-transparent border-none outline-none text-sm leading-relaxed placeholder:text-indigo-200" placeholder="위 가이드를 참고하여 오늘 발견한 나만의 패턴을 기록해보세요."></textarea>
+                    <p class="text-[10px] text-indigo-300 italic mt-2">저장 버튼을 누르면 이 노트도 함께 보관됩니다.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 보관소 탭 -->
+    <main id="viewList" class="p-8 hidden space-y-6">
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-gray-800 text-lg">기록 아카이브</h2>
+            <button id="downloadCsv" class="text-xs font-bold text-white bg-slate-800 px-5 py-2 rounded-xl">CSV Download</button>
+        </div>
+        <div id="monthFilter" class="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+            <button class="month-chip active" data-month="all">전체</button>
+        </div>
+        <div id="historyGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12"></div>
+    </main>
+
+    <!-- 설정 탭 -->
+    <main id="viewSetting" class="p-8 hidden">
+        <div class="max-w-md mx-auto bg-slate-50 p-10 rounded-[40px] border shadow-sm space-y-8">
+            <div class="text-center">
+                <h2 class="font-black text-slate-800 text-xl">사주 명식 설정</h2>
+                <p class="text-xs text-slate-400 mt-2">정확한 신살 계산을 위해 출생 정보를 입력하세요.</p>
+            </div>
+            <div class="space-y-4">
+                <div class="group">
+                    <label class="text-[10px] font-bold text-slate-400 ml-2">생년월일</label>
+                    <input type="date" id="birthDate" class="w-full p-4 mt-1 bg-white rounded-2xl border-none outline-none focus:ring-2 ring-indigo-500 shadow-sm">
+                </div>
+                <div class="group">
+                    <label class="text-[10px] font-bold text-slate-400 ml-2">태어난 시간</label>
+                    <input type="time" id="birthTime" class="w-full p-4 mt-1 bg-white rounded-2xl border-none outline-none focus:ring-2 ring-indigo-500 shadow-sm">
+                </div>
+                <button id="saveSettingBtn" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-bold shadow-lg shadow-indigo-100 mt-4">정보 업데이트</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // --- 명리 융합 데이터 ---
+    const JI = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
+    const SHINSAL_LIST = ["지살", "년살", "월살", "망신살", "장성살", "반안살", "역마살", "육해살", "화개살", "겁살", "재살", "천살"];
+    
+    // 문서 + 명리 지식 융합 코멘트
+    const SHINSAL_INSIGHTS = {
+        "겁살": "오늘은 삼합의 궤적이 끝나고 '적군'에게 기운을 강하게 압박받는 시점입니다. 내 의지와 상관없이 무언가를 내어주거나 강한 스트레스를 받을 수 있습니다. 이는 명리학적으로 새로운 순환을 위해 기존의 것을 청산하는 과정이니, 억지로 버티기보다 유연하게 대처했는지 복기해보세요.",
+        "재살": "적군에게 완전히 포위된 '재앙'의 형국입니다. 내가 주도적으로 움직이면 오히려 화를 입을 수 있으니, 꾀(재치)를 써서 상황을 모면해야 하는 날입니다. 오늘 당신의 행동이 정면 승부였나요, 아니면 영리한 회피였나요?",
+        "천살": "하늘을 우러러보며 세월을 기다려야 하는 시기입니다. 삼합의 반대 기운이 정점에 달해 있어 내가 할 수 있는 것이 거의 없습니다. '내 맘대로 안 되는 하루'였다면 그것이 바로 천살의 기운입니다. 수용하는 태도를 공부해보세요.",
+        "지살": "드디어 지상에 발을 딛고 자신의 기운을 드러내는 '장생'의 시기입니다. 새로운 제안이나 이동의 기운이 강합니다. 적군을 피해 새로운 근거지를 마련하듯, 오늘 당신이 새롭게 시작한 일이 있다면 그것이 지살의 발현입니다.",
+        "년살": "타인의 주목을 받는 '도화'의 기운입니다. 목욕(沐욕)하듯 때를 벗기고 자신을 드러내야 하기에 애정 문제나 구설수가 따를 수 있습니다. 오늘 당신은 주인공이었나요, 아니면 관찰자였나요?",
+        "월살": "남의 희생이나 주변의 정체 속에서 뜻밖의 이익(고난 속의 달빛)을 얻는 시기입니다. 내가 잘해서라기보다 환경적 요인으로 모양새를 갖추게 됩니다. 오늘 얻은 작은 행운이 누구의 덕이었는지 생각해보세요.",
+        "망신살": "기운이 건록에 이르러 대놓고 밖으로 드러나는 시점입니다. 자신감이 넘쳐 과하게 행동하다 실수를 노출할 수 있습니다. 오늘 당신의 '솔직함'이 득이 되었나요, 아니면 망신이 되었나요?",
+        "장성살": "삼합 기운의 정점인 '제왕'의 날입니다. 장수가 군대를 거느리듯 주도권을 쥐고 세상을 호령하는 기운입니다. 오늘 당신이 내린 결정들은 강력했나요? 주도권을 쥔 자의 책임감을 느껴보세요.",
+        "반안살": "전쟁에서 승리하고 말 안장에 올라 전리품을 챙기는 '쇠(衰)'의 시기입니다. 장성살의 격렬한 투쟁 끝에 얻는 평온함입니다. 오늘 유독 마음이 편안하고 실속이 있었다면 반안의 덕입니다. 아래 노트에 그 성취를 기록하세요.",
+        "역마살": "다시 적군이 쳐들어오니 급히 이동해야 하는 '병(病)'의 시기입니다. 예전의 역마가 도망이었다면 현대는 개척과 확장입니다. 오늘 분주하게 움직인 동선이 당신의 영토를 넓혔는지 확인해보세요.",
+        "육해살": "사방에서 해로운 기운이 닥쳐 예민해지는 시기입니다. 기운이 쇠약해져 정신적인 스트레스나 질병에 노출되기 쉽습니다. 오늘 당신의 예민함이 어디를 향했는지, 혹시 육체보다 정신이 앞서지 않았는지 복기해보세요.",
+        "화개살": "화려했던 불꽃을 닫고 창고(墓)에 가두는 시기입니다. 다시 올 순환을 위해 짐을 정리하고 과거를 회상하며 예술적 감수성에 젖기 좋습니다. 오늘 당신이 정리한 생각이나 물건은 무엇인가요?"
+    };
+
+    let state = {
+        date: new Date().toISOString().split('T')[0],
+        userZodiac: localStorage.getItem('userZodiac') || '',
+        userSaju: localStorage.getItem('userSaju') || '',
+        currentMood: '',
+        filterMonth: 'all'
+    };
+
+    // --- 핵심 엔진 ---
+    function getAccurateGanji(dateStr) {
+        const date = new Date(dateStr);
+        const base = new Date('2026-01-24'); 
+        const diff = Math.round((date - base) / 86400000);
+        return { 
+            yearJi: JI[(6 + (date.getFullYear() - 2026) % 12 + 12) % 12],
+            monthJi: JI[(date.getMonth() + 1) % 12],
+            dayJi: JI[(10 + (diff % 12) + 12) % 12]
+        };
+    }
+
+    function calculateShinsal(basisJi, targetJi) {
+        if(!basisJi) return "-";
+        const groups = { '해':['해','묘','미'], '인':['인','오','술'], '사':['사','유','축'], '신':['신','자','진'] };
+        let startJi = '';
+        for(let k in groups) if(groups[k].includes(basisJi)) startJi = k;
+        const startIdx = JI.indexOf(startJi);
+        const targetIdx = JI.indexOf(targetJi);
+        return SHINSAL_LIST[(targetIdx - startIdx + 12) % 12];
+    }
+
+    // --- UI 로직 ---
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === 'tab'+tab.charAt(0).toUpperCase()+tab.slice(1)));
+        document.getElementById('viewToday').classList.toggle('hidden', tab !== 'today');
+        document.getElementById('viewList').classList.toggle('hidden', tab !== 'list');
+        document.getElementById('viewSetting').classList.toggle('hidden', tab !== 'setting');
+        if(tab === 'list') renderHistory();
+        if(tab === 'today') loadToday();
+    }
+
+    function loadToday() {
+        const diaryData = JSON.parse(localStorage.getItem(`iljin:diary:${state.date}`)) || { text: '', mood: '' };
+        const studyData = JSON.parse(localStorage.getItem(`iljin:study:${state.date}`)) || { memo: '' };
+        
+        document.getElementById('diaryText').value = diaryData.text;
+        document.getElementById('studyMemo').value = studyData.memo;
+        state.currentMood = diaryData.mood;
+
+        const g = getAccurateGanji(state.date);
+        const sD = calculateShinsal(state.userZodiac, g.dayJi);
+        
+        document.getElementById('shinsalYear').innerText = calculateShinsal(state.userZodiac, g.yearJi);
+        document.getElementById('shinsalMonth').innerText = calculateShinsal(state.userZodiac, g.monthJi);
+        document.getElementById('shinsalDay').innerText = sD;
+
+        updateSajuBar();
+        updateMoodButtons();
+
+        if(diaryData.text && diaryData.mood) {
+            document.getElementById('insightSection').style.opacity = "1";
+            document.getElementById('aiComment').innerHTML = SHINSAL_INSIGHTS[sD];
+            document.getElementById('youtubeSection').classList.remove('hidden');
+            document.getElementById('youtubeLink').href = `https://www.youtube.com/results?search_query=사주+${sD}+의미`;
+        } else {
+            document.getElementById('insightSection').style.opacity = "0.4";
+            document.getElementById('aiComment').innerText = "일기를 작성하고 저장하시면 명리 가이드가 활성화됩니다.";
+        }
+    }
+
+    function updateSajuBar() {
+        document.getElementById('displaySaju').innerText = state.userSaju || "설정에서 사주를 입력해주세요";
+        document.getElementById('displayZodiac').innerText = state.userZodiac || "-";
+    }
+
+    function updateMoodButtons() {
+        document.querySelectorAll('#moodButtons button').forEach(b => b.classList.toggle('mood-selected', b.getAttribute('data-mood') === state.currentMood));
+    }
+
+    function renderHistory() {
+        const grid = document.getElementById('historyGrid');
+        grid.innerHTML = '';
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('iljin:diary:')).sort().reverse();
+        keys.forEach(k => {
+            const d = k.replace('iljin:diary:', '');
+            if(state.filterMonth !== 'all' && d.split('-')[1] !== state.filterMonth) return;
+            const data = JSON.parse(localStorage.getItem(k));
+            const study = JSON.parse(localStorage.getItem(`iljin:study:${d}`)) || { memo: '' };
+            const sD = calculateShinsal(state.userZodiac, getAccurateGanji(d).dayJi);
+            
+            const card = document.createElement('div');
+            card.className = "bg-white p-6 rounded-3xl border hover:border-indigo-300 shadow-sm transition-all cursor-pointer";
+            card.innerHTML = `<div class="flex justify-between items-center mb-4"><span class="text-[10px] font-bold text-slate-400">${d}</span><span class="text-[10px] bg-slate-100 px-2 py-1 rounded font-black text-indigo-500 uppercase">${sD}</span></div>
+                             <p class="font-bold text-sm mb-3 line-clamp-1">${data.mood} ${data.text}</p>
+                             <p class="text-[11px] text-slate-400 border-t pt-3 line-clamp-2 italic">${study.memo || '학습 기록 없음'}</p>`;
+            card.onclick = () => { state.date = d; document.getElementById('datePicker').value = d; switchTab('today'); loadToday(); };
+            grid.appendChild(card);
+        });
+    }
+
+    // --- 이벤트 핸들러 ---
+    document.getElementById('saveBtn').onclick = () => {
+        const text = document.getElementById('diaryText').value;
+        const memo = document.getElementById('studyMemo').value;
+        if(!state.currentMood) return alert('기분을 선택해주세요!');
+        
+        localStorage.setItem(`iljin:diary:${state.date}`, JSON.stringify({ text, mood: state.currentMood }));
+        localStorage.setItem(`iljin:study:${state.date}`, JSON.stringify({ memo }));
+        
+        loadToday();
+        alert('오늘의 기록과 학습 노트가 저장되었습니다.');
+    };
+
+    document.getElementById('saveSettingBtn').onclick = () => {
+        const date = document.getElementById('birthDate').value;
+        if(!date) return;
+        let saju = date === "1995-02-25" ? "을해년 무인월 정해일 기유시" : `${date.split('-')[0]}년생`;
+        let zodiac = date === "1995-02-25" ? "해" : JI[(new Date(date).getFullYear() - 4) % 12];
+        state.userSaju = saju; state.userZodiac = zodiac;
+        localStorage.setItem('userSaju', saju); localStorage.setItem('userZodiac', zodiac);
+        alert('명식 정보가 저장되었습니다!'); switchTab('today'); loadToday();
+    };
+
+    document.getElementById('downloadCsv').onclick = () => {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('iljin:diary:')).sort();
+        let csv = "\uFEFF날짜,감정,일기내용,일신살,나의학습노트\n";
+        keys.forEach(k => {
+            const d = k.replace('iljin:diary:', '');
+            const diary = JSON.parse(localStorage.getItem(k));
+            const study = JSON.parse(localStorage.getItem(`iljin:study:${d}`)) || { memo: '' };
+            const sD = calculateShinsal(state.userZodiac, getAccurateGanji(d).dayJi);
+            csv += `${d},${diary.mood},"${diary.text.replace(/"/g, '""')}",${sD},"${study.memo.replace(/"/g, '""')}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `일진일기_전체기록.csv`;
+        a.click();
+    };
+
+    const filter = document.getElementById('monthFilter');
+    for(let i=1; i<=12; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'month-chip';
+        btn.innerText = i + '월';
+        btn.onclick = (e) => {
+            document.querySelectorAll('.month-chip').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            state.filterMonth = i.toString().padStart(2, '0');
+            renderHistory();
+        };
+        filter.appendChild(btn);
+    }
+
+    document.querySelectorAll('#moodButtons button').forEach(b => b.onclick = () => { state.currentMood = b.getAttribute('data-mood'); updateMoodButtons(); });
+    document.getElementById('tabToday').onclick = () => switchTab('today');
+    document.getElementById('tabList').onclick = () => switchTab('list');
+    document.getElementById('tabSetting').onclick = () => switchTab('setting');
+    document.getElementById('datePicker').onchange = (e) => { state.date = e.target.value; loadToday(); };
+
+    // 초기 실행
+    document.getElementById('datePicker').value = state.date;
+    loadToday();
+
+</script>
+</body>
+</html>
