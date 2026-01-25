@@ -2,127 +2,152 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일진일기 v3.5 (2026 정밀 만세력)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>일진일기 v3.9 (UX 강화 버전)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; color: #334155; }
-        .tab-btn { padding-bottom: 4px; border-bottom: 2px solid transparent; color: #94a3b8; transition: all 0.2s; cursor: pointer; }
-        .tab-btn.active { border-bottom: 2px solid #6366f1; color: #6366f1; font-weight: bold; }
-        .mood-selected { background-color: #eef2ff; border: 2px solid #6366f1; transform: scale(1.1); }
-        .ai-box { position: relative; border-radius: 20px; background: white; border: 1px solid #e2e8f0; padding: 28px; }
-        .ai-box::before { content: 'MENTOR'; position: absolute; top: -10px; left: 20px; background: #6366f1; color: white; font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 4px; }
-        .hidden { display: none !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; color: #334155; -webkit-tap-highlight-color: transparent; }
+        .tab-btn { padding: 12px 16px; font-weight: 700; font-size: 14px; color: #94a3b8; transition: all 0.2s; border-radius: 12px; }
+        .tab-btn.active { background-color: #f1f5f9; color: #6366f1; }
+        .mood-selected { background-color: #eef2ff !important; border: 2px solid #6366f1 !important; transform: scale(1.15); }
+        .shinsal-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .ai-box { position: relative; border-radius: 24px; background: white; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        .ai-box::before { content: 'MENTOR'; position: absolute; top: -10px; left: 24px; background: #6366f1; color: white; font-size: 10px; font-weight: 900; padding: 2px 10px; border-radius: 6px; }
+        .term-badge { background: #f8fafc; color: #64748b; padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; border: 1px solid #e2e8f0; white-space: nowrap; }
+        .term-active { border-color: #6366f1; color: #6366f1; background: #f5f7ff; }
+        
+        /* 날짜 입력창 커스텀 (아이콘 클릭을 유도하기 위해) */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0;
+            position: absolute;
+            left: 0; right: 0; top: 0; bottom: 0;
+            width: 100%; height: 100%;
+        }
     </style>
 </head>
 <body>
 
-<div id="app" class="max-w-5xl mx-auto min-h-screen flex flex-col shadow-2xl bg-white">
+<div id="app" class="max-w-xl mx-auto min-h-screen flex flex-col bg-white shadow-sm md:shadow-2xl">
     <!-- 헤더 -->
-    <header class="px-8 py-6 flex justify-between items-center border-b sticky top-0 bg-white z-30">
-        <h1 class="text-xl font-black text-indigo-600 tracking-tighter cursor-pointer" onclick="location.reload()">일진일기 日辰日記</h1>
-        <nav class="flex gap-8 text-sm font-bold">
-            <button id="tabToday" class="tab-btn active">오늘의 기록</button>
-            <button id="tabList" class="tab-btn">나의 보관소</button>
-            <button id="tabSetting" class="tab-btn">내 설정</button>
-        </nav>
-        <div id="authArea">
-            <button id="loginBtn" class="text-xs font-bold text-white bg-slate-800 px-4 py-2 rounded-lg">구글 로그인</button>
-            <div id="userInfo" class="hidden flex items-center gap-3">
-                <img id="userPhoto" class="w-8 h-8 rounded-full border shadow-sm">
-                <button id="logoutBtn" class="text-[10px] text-gray-400 font-bold underline">로그아웃</button>
+    <header class="px-5 py-4 flex flex-col gap-4 border-b sticky top-0 bg-white/95 backdrop-blur-md z-30">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-black text-indigo-600 tracking-tighter" onclick="location.reload()">일진일기 日辰日記</h1>
+            <div id="authArea">
+                <button id="loginBtn" class="text-xs font-bold text-white bg-slate-800 px-4 py-2 rounded-xl shadow-sm">구글 로그인</button>
+                <div id="userInfo" class="hidden flex items-center gap-2">
+                    <img id="userPhoto" class="w-8 h-8 rounded-full border shadow-sm">
+                    <button id="logoutBtn" class="text-[10px] text-gray-400 font-bold underline">로그아웃</button>
+                </div>
             </div>
         </div>
+        <nav class="flex p-1 bg-slate-50 rounded-2xl">
+            <button id="tabToday" class="tab-btn active flex-1">오늘의 기록</button>
+            <button id="tabList" class="tab-btn flex-1">나의 보관소</button>
+            <button id="tabSetting" class="tab-btn flex-1">내 설정</button>
+        </nav>
     </header>
 
     <!-- 명식 바 -->
-    <div id="userSajuBar" class="bg-slate-50 px-8 py-3 border-b flex justify-between items-center text-[11px]">
-        <div class="flex gap-4">
-            <span class="text-gray-400 font-bold uppercase tracking-widest">Master Saju</span>
-            <span id="displaySaju" class="font-bold text-slate-700 italic">로그인 후 사주를 설정해주세요.</span>
+    <div id="userSajuBar" class="bg-indigo-50 px-5 py-3 border-b flex justify-between items-center text-[11px]">
+        <div class="flex gap-2 items-center">
+            <span class="text-indigo-400 font-bold">내 사주명식</span>
+            <span id="displaySaju" class="font-bold text-indigo-900 truncate max-w-[200px]">로그인 후 설정해주세요.</span>
         </div>
-        <div id="displayZodiac" class="bg-white border px-3 py-1 rounded-full text-indigo-600 font-black">-</div>
+        <div id="displayZodiac" class="bg-indigo-600 text-white px-2 py-0.5 rounded-md font-black">-</div>
     </div>
 
-    <!-- 메인: 오늘의 기록 -->
-    <main id="viewToday" class="p-8 space-y-8 block">
-        <section class="flex flex-col gap-6">
-            <div class="flex justify-between items-center">
-                <input type="date" id="datePicker" class="p-2 border-none bg-slate-100 rounded-lg text-sm font-bold outline-none">
-                <div class="flex gap-4">
-                    <div class="text-center bg-white border p-3 rounded-xl min-w-[100px]">
-                        <p id="ganjiYear" class="text-[10px] text-slate-400 font-bold mb-1">- 년</p>
-                        <h3 id="shinsalYear" class="text-xs font-bold text-slate-600">-</h3>
-                    </div>
-                    <div class="text-center bg-white border p-3 rounded-xl min-w-[100px]">
-                        <p id="ganjiMonth" class="text-[10px] text-slate-400 font-bold mb-1">- 월</p>
-                        <h3 id="shinsalMonth" class="text-xs font-bold text-slate-600">-</h3>
-                    </div>
-                    <div class="text-center bg-indigo-50 border border-indigo-200 p-3 rounded-xl min-w-[110px]">
-                        <p id="ganjiDay" class="text-[10px] text-indigo-400 font-black mb-1">- 일</p>
-                        <h3 id="shinsalDay" class="text-sm font-black text-indigo-600">-</h3>
-                    </div>
+    <!-- 1. 오늘의 기록 탭 -->
+    <main id="viewToday" class="flex-1 p-5 space-y-6 block pb-24">
+        <!-- 날짜 선택 줄 (아이콘 통합) -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="relative flex items-center gap-2 bg-slate-100 hover:bg-slate-200 transition-colors px-3 py-2 rounded-xl cursor-pointer">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <input type="date" id="datePicker" class="bg-transparent text-sm font-black outline-none border-none cursor-pointer">
+                </div>
+                <div id="termBadge" class="term-badge">절기 정보</div>
+            </div>
+            
+            <!-- 간지 카드 -->
+            <div class="grid grid-cols-3 gap-2">
+                <div class="shinsal-card">
+                    <p id="ganjiYear" class="text-[9px] text-slate-400 font-bold mb-1">- 년</p>
+                    <h3 id="shinsalYear" class="text-xs font-bold text-slate-600">-</h3>
+                </div>
+                <div class="shinsal-card">
+                    <p id="ganjiMonth" class="text-[9px] text-slate-400 font-bold mb-1">- 월</p>
+                    <h3 id="shinsalMonth" class="text-xs font-bold text-slate-600">-</h3>
+                </div>
+                <div class="shinsal-card border-indigo-200 bg-indigo-50/30">
+                    <p id="ganjiDay" class="text-[9px] text-indigo-500 font-black mb-1">- 일</p>
+                    <h3 id="shinsalDay" class="text-xs font-black text-indigo-600">-</h3>
                 </div>
             </div>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <section class="space-y-6">
-                <textarea id="diaryText" class="w-full h-52 p-6 bg-slate-50 rounded-3xl outline-none focus:ring-2 ring-indigo-100 text-sm leading-relaxed border-none shadow-inner" placeholder="오늘 어떤 기운이 느껴졌나요?"></textarea>
-                <div class="flex justify-between items-center">
-                    <div id="moodButtons" class="flex gap-3 text-2xl">
-                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-indigo-50" data-mood="😄">😄</button>
-                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-indigo-50" data-mood="🙂">🙂</button>
-                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-indigo-50" data-mood="😐">😐</button>
-                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-indigo-50" data-mood="😔">😔</button>
-                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-indigo-50" data-mood="😫">😫</button>
-                    </div>
-                    <button id="saveBtn" class="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-indigo-700 shadow-xl shadow-indigo-100">저장 및 복기</button>
-                </div>
-            </section>
+        <!-- 일기 작성 -->
+        <section class="space-y-4">
+            <textarea id="diaryText" class="w-full h-44 p-5 bg-slate-50 rounded-[28px] outline-none focus:ring-2 ring-indigo-100 text-sm leading-relaxed border-none shadow-inner" placeholder="오늘 어떤 기운이 느껴졌나요?"></textarea>
+            <div id="moodButtons" class="flex justify-around items-center py-2 bg-white rounded-2xl border border-slate-100">
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl text-2xl" data-mood="😄">😄</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl text-2xl" data-mood="🙂">🙂</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl text-2xl" data-mood="😐">😐</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl text-2xl" data-mood="😔">😔</button>
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl text-2xl" data-mood="😫">😫</button>
+            </div>
+        </section>
 
-            <section id="insightSection" class="flex flex-col space-y-6 opacity-40 transition-opacity duration-500">
-                <div class="ai-box">
-                    <div id="aiComment" class="text-sm text-slate-600 leading-relaxed font-medium">기록을 저장하면 명리 멘토링이 시작됩니다.</div>
-                    <div id="youtubeSection" class="mt-4 hidden border-t pt-4">
-                        <a id="youtubeLink" target="_blank" class="text-[11px] text-red-500 font-bold hover:underline">📺 원리 심화 학습</a>
-                    </div>
+        <!-- 인사이트 -->
+        <section id="insightSection" class="flex flex-col space-y-6 opacity-40 transition-opacity">
+            <div class="ai-box">
+                <div id="aiComment" class="text-sm text-slate-600 leading-relaxed font-medium">기록을 저장하면 멘토링이 시작됩니다.</div>
+                <div id="youtubeSection" class="mt-4 hidden border-t pt-4">
+                    <a id="youtubeLink" target="_blank" class="text-[11px] text-red-500 font-bold hover:underline flex items-center gap-1">📺 기운 원리 학습하기</a>
                 </div>
-                <div class="bg-indigo-50/50 p-7 rounded-3xl border border-indigo-100 border-dashed">
-                    <h3 class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">My Study Note</h3>
-                    <textarea id="studyMemo" class="w-full h-40 bg-transparent border-none outline-none text-sm leading-relaxed" placeholder="관찰 패턴을 기록하세요."></textarea>
-                </div>
-            </section>
+            </div>
+            <div class="bg-slate-50 p-6 rounded-[28px] border border-slate-100">
+                <h3 class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 text-center">My Study Note</h3>
+                <textarea id="studyMemo" class="w-full h-32 bg-transparent border-none outline-none text-sm leading-relaxed" placeholder="관찰된 패턴을 기록하세요."></textarea>
+            </div>
+        </section>
+
+        <!-- 하단 저장 버튼 -->
+        <div class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto p-4 bg-white/80 backdrop-blur-md border-t z-20">
+            <button id="saveBtn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl active:scale-[0.98]">저장 및 복기</button>
         </div>
     </main>
 
-    <!-- 보관소 & 설정 (v3.4와 동일 구조) -->
-    <main id="viewList" class="p-8 hidden space-y-6 text-center">
-        <div id="listLoggedIn" class="hidden space-y-6 text-left">
-            <div class="flex justify-between items-center"><h2 class="font-bold text-gray-800 text-lg">기록 아카이브</h2><button id="downloadCsv" class="text-xs font-bold text-white bg-slate-800 px-5 py-2 rounded-xl">CSV Download</button></div>
-            <div id="monthFilter" class="flex gap-2 overflow-x-auto pb-4 scrollbar-hide"><button class="month-chip active" data-month="all">전체</button></div>
-            <div id="historyGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12"></div>
+    <!-- 보관소 탭 -->
+    <main id="viewList" class="p-5 hidden space-y-6">
+        <div id="listLoggedIn" class="hidden space-y-6">
+            <div class="flex justify-between items-center"><h2 class="font-bold text-gray-800">기록 아카이브</h2><button id="downloadCsv" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl">CSV 다운로드</button></div>
+            <div id="historyGrid" class="grid grid-cols-1 gap-4 pb-12"></div>
         </div>
-        <div id="listLoggedOut" class="py-20 text-gray-400 font-bold">로그인 후 확인할 수 있습니다.</div>
+        <div id="listLoggedOut" class="py-20 text-center text-slate-400 font-bold">로그인 후 확인 가능합니다.</div>
     </main>
 
-    <main id="viewSetting" class="p-8 hidden">
-        <div id="settingLoggedIn" class="hidden max-w-md mx-auto bg-slate-50 p-10 rounded-[40px] border shadow-sm space-y-8 text-center">
-            <h2 class="font-black text-slate-800 text-xl">사주 명식 설정</h2>
-            <input type="date" id="birthDate" class="w-full p-4 bg-white rounded-2xl border-none outline-none">
-            <input type="time" id="birthTime" class="w-full p-4 bg-white rounded-2xl border-none outline-none">
-            <button id="saveSettingBtn" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-bold">정보 업데이트</button>
+    <!-- 설정 탭 -->
+    <main id="viewSetting" class="p-5 hidden">
+        <div id="settingLoggedIn" class="hidden max-w-sm mx-auto bg-slate-50 p-8 rounded-[32px] border space-y-8">
+            <h2 class="font-black text-slate-800 text-xl text-center">사주 명식 설정</h2>
+            <div class="space-y-4">
+                <input type="date" id="birthDate" class="w-full p-4 bg-white rounded-2xl border-none outline-none shadow-sm">
+                <input type="time" id="birthTime" class="w-full p-4 bg-white rounded-2xl border-none outline-none shadow-sm">
+                <button id="saveSettingBtn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg">정보 업데이트</button>
+            </div>
         </div>
-        <div id="settingLoggedOut" class="text-center py-20 text-gray-400 font-bold">로그인 후 설정할 수 있습니다.</div>
     </main>
 </div>
 
 <script>
-    // --- 1. Firebase 설정 ---
+    // --- 1. Firebase 설정 (v3.4 키값) ---
     const firebaseConfig = {
         apiKey: "AIzaSyCQ8SBHDdbsyQCM948YTla6He4WuBCBKAc",
         authDomain: "iljin-diary.firebaseapp.com",
@@ -137,60 +162,48 @@
     const db = firebase.firestore();
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    // --- 2. 명리 데이터 및 정밀 계산 엔진 ---
+    // --- 2. 2026 절기 및 명리 엔진 (v3.8 로직) ---
     const GAN = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"];
     const JI = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
     const SHINSAL_LIST = ["지살", "년살", "월살", "망신살", "장성살", "반안살", "역마살", "육해살", "화개살", "겁살", "재살", "천살"];
 
-    // 2026년 절기 데이터 (표의 월주/년주 변경 시점)
     const SOLAR_TERMS_2026 = [
-        { name: '소한', date: '2026-01-05' },
-        { name: '입춘', date: '2026-02-04' },
-        { name: '경칩', date: '2026-03-05' },
-        { name: '청명', date: '2026-04-05' },
-        { name: '입하', date: '2026-05-06' },
-        { name: '망종', date: '2026-06-06' },
-        { name: '소서', date: '2026-07-07' },
-        { name: '입추', date: '2026-08-08' },
-        { name: '백로', date: '2026-09-08' },
-        { name: '한로', date: '2026-10-08' },
-        { name: '입동', date: '2026-11-07' },
-        { name: '대설', date: '2026-12-07' }
+        { name: '소한', date: '2026-01-05' }, { name: '대한', date: '2026-01-20' },
+        { name: '입춘', date: '2026-02-04' }, { name: '우수', date: '2026-02-19' },
+        { name: '경칩', date: '2026-03-05' }, { name: '춘분', date: '2026-03-20' },
+        { name: '청명', date: '2026-04-05' }, { name: '곡우', date: '2026-04-20' },
+        { name: '입하', date: '2026-05-05' }, { name: '소만', date: '2026-05-21' },
+        { name: '망종', date: '2026-06-06' }, { name: '하지', date: '2026-06-21' },
+        { name: '소서', date: '2026-07-07' }, { name: '대서', date: '2026-07-23' },
+        { name: '입추', date: '2026-08-07' }, { name: '처서', date: '2026-08-23' },
+        { name: '백로', date: '2026-09-07' }, { name: '추분', date: '2026-09-23' },
+        { name: '한로', date: '2026-10-08' }, { name: '상강', date: '2026-10-23' },
+        { name: '입동', date: '2026-11-07' }, { name: '소설', date: '2026-11-22' },
+        { name: '대설', date: '2026-12-07' }, { name: '동지', date: '2026-12-22' }
     ];
 
     function getAccurateGanji(dateStr) {
         const targetDate = new Date(dateStr);
-        const year = targetDate.getFullYear();
         const dateISO = targetDate.toISOString().split('T')[0];
-
-        // 1. 일진 계산 (2026-01-01 = 을해일 51번째 기준)
         const baseDate = new Date('2026-01-01');
         const diffDays = Math.round((targetDate - baseDate) / 86400000);
-        const dayIdx = (51 + diffDays) % 60; // 을해(51)에서 시작
+        const dayIdx = (51 + diffDays) % 60;
         const dayGanji = GAN[dayIdx % 10] + JI[dayIdx % 12];
-
-        // 2. 년주 계산 (입춘 기준)
-        // 2026년 입춘(2/4) 전까지는 을사(41), 후로는 병오(42)
-        const ipchun = new Date('2026-02-04');
-        const yearIdx = (targetDate < ipchun) ? 41 : 42;
+        const yearIdx = (dateISO < '2026-02-04') ? 41 : 42;
         const yearGanji = GAN[yearIdx % 10] + JI[yearIdx % 12];
-
-        // 3. 월주 계산 (절기 기준)
-        // 1/1~2/3 기축(25), 2/4~3/4 경인(26), 3/5~4/4 신묘(27)...
-        let monthIdx = 25; // 기축월 시작
-        for (let i = 1; i < SOLAR_TERMS_2026.length; i++) {
-            if (dateISO >= SOLAR_TERMS_2026[i].date) {
-                monthIdx = 25 + i;
-            }
+        const monthStartTerms = ['2026-01-05', '2026-02-04', '2026-03-05', '2026-04-05', '2026-05-05', '2026-06-06', '2026-07-07', '2026-08-07', '2026-09-07', '2026-10-08', '2026-11-07', '2026-12-07'];
+        let monthIdx = 25;
+        for(let i=0; i<monthStartTerms.length; i++) {
+            if(dateISO >= monthStartTerms[i]) monthIdx = 25 + i;
         }
         const monthGanji = GAN[monthIdx % 10] + JI[monthIdx % 12];
 
-        return {
-            yearGanji, monthGanji, dayGanji,
-            yearJi: JI[yearIdx % 12],
-            monthJi: JI[monthIdx % 12],
-            dayJi: JI[dayIdx % 12]
-        };
+        let currentTerm = SOLAR_TERMS_2026[0];
+        for(let term of SOLAR_TERMS_2026) {
+            if(dateISO >= term.date) currentTerm = term;
+        }
+        const termLabelDate = currentTerm.date.split('-').slice(1).join('.');
+        return { yearGanji, monthGanji, dayGanji, yearJi: JI[yearIdx % 12], monthJi: JI[monthIdx % 12], dayJi: JI[dayIdx % 12], currentTerm: currentTerm.name, currentTermDate: termLabelDate, isTermDay: dateISO === currentTerm.date };
     }
 
     function calculateShinsal(basisJi, targetJi) {
@@ -198,14 +211,14 @@
         const groups = { '해':['해','묘','미'], '인':['인','오','술'], '사':['사','유','축'], '신':['신','자','진'] };
         let startJi = '';
         for(let k in groups) if(groups[k].includes(basisJi)) startJi = k;
-        const startIdx = JI.indexOf(startJi);
         const targetIdx = JI.indexOf(targetJi);
+        const startIdx = JI.indexOf(startJi);
         return SHINSAL_LIST[(targetIdx - startIdx + 12) % 12];
     }
 
-    // --- 3. 앱 상태 및 Firebase 연동 로직 ---
+    // --- 3. 앱 제어 및 Firebase ---
     let currentUser = null;
-    let state = { date: new Date().toISOString().split('T')[0], userZodiac: '', userSaju: '', currentMood: '', filterMonth: 'all' };
+    let state = { date: new Date().toISOString().split('T')[0], userZodiac: '', userSaju: '', currentMood: '' };
 
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -216,7 +229,6 @@
             document.getElementById('listLoggedIn').classList.remove('hidden');
             document.getElementById('listLoggedOut').classList.add('hidden');
             document.getElementById('settingLoggedIn').classList.remove('hidden');
-            document.getElementById('settingLoggedOut').classList.add('hidden');
             await loadUserData(); loadToday();
         } else {
             currentUser = null;
@@ -225,60 +237,49 @@
             document.getElementById('listLoggedIn').classList.add('hidden');
             document.getElementById('listLoggedOut').classList.remove('hidden');
             document.getElementById('settingLoggedIn').classList.add('hidden');
-            document.getElementById('settingLoggedOut').classList.remove('hidden');
-            state.userSaju = ''; state.userZodiac = ''; loadToday();
+            loadToday();
         }
     });
 
     async function loadUserData() {
         if (!currentUser) return;
         const userDoc = await db.collection("users").doc(currentUser.uid).get();
-        if (userDoc.exists) {
-            const ud = userDoc.data();
-            state.userSaju = ud.userSaju || '';
-            state.userZodiac = ud.userZodiac || '';
-        }
+        if (userDoc.exists) { const ud = userDoc.data(); state.userSaju = ud.userSaju || ''; state.userZodiac = ud.userZodiac || ''; }
     }
 
     async function loadToday() {
         let diaryData = { text: '', mood: '' };
         let studyData = { memo: '' };
-
         if (currentUser) {
             const doc = await db.collection("users").doc(currentUser.uid).collection("diaries").doc(state.date).get();
-            if (doc.exists) {
-                const s = doc.data();
-                diaryData = { text: s.text, mood: s.mood };
-                studyData = { memo: s.studyMemo };
-            }
+            if (doc.exists) { const s = doc.data(); diaryData = { text: s.text, mood: s.mood }; studyData = { memo: s.studyMemo }; }
         }
-        
         document.getElementById('diaryText').value = diaryData.text;
         document.getElementById('studyMemo').value = studyData.memo || "";
         state.currentMood = diaryData.mood;
 
-        // 표와 일치하는 정밀 계산 결과 적용
         const g = getAccurateGanji(state.date);
-        document.getElementById('ganjiYear').innerText = g.yearGanji + '년';
-        document.getElementById('ganjiMonth').innerText = g.monthGanji + '월';
-        document.getElementById('ganjiDay').innerText = g.dayGanji + '일';
-
-        const sD = calculateShinsal(state.userZodiac, g.dayJi);
+        document.getElementById('ganjiYear').innerText = g.yearGanji;
+        document.getElementById('ganjiMonth').innerText = g.monthGanji;
+        document.getElementById('ganjiDay').innerText = g.dayGanji;
         document.getElementById('shinsalYear').innerText = calculateShinsal(state.userZodiac, g.yearJi);
         document.getElementById('shinsalMonth').innerText = calculateShinsal(state.userZodiac, g.monthJi);
+        const sD = calculateShinsal(state.userZodiac, g.dayJi);
         document.getElementById('shinsalDay').innerText = sD;
+
+        const badge = document.getElementById('termBadge');
+        badge.innerText = `현재 절기 : ${g.currentTerm}(${g.currentTermDate})`;
+        badge.classList.toggle('term-active', g.isTermDay);
 
         updateSajuBar(); updateMoodButtons();
         document.getElementById('insightSection').style.opacity = (diaryData.text) ? "1" : "0.4";
     }
 
-    // --- 4. 이벤트 및 UI 제어 (v3.4와 동일하되 계산엔진 연동) ---
     document.getElementById('saveBtn').onclick = async () => {
         if (!currentUser) return alert('로그인이 필요합니다.');
         const text = document.getElementById('diaryText').value;
         const memo = document.getElementById('studyMemo').value;
         if(!state.currentMood) return alert('기분을 선택해주세요.');
-
         await db.collection("users").doc(currentUser.uid).collection("diaries").doc(state.date).set({
             text, mood: state.currentMood, studyMemo: memo, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -288,7 +289,7 @@
 
     document.getElementById('saveSettingBtn').onclick = async () => {
         const date = document.getElementById('birthDate').value;
-        if(!date) return;
+        if(!date) return alert('날짜를 입력하세요.');
         state.userSaju = date === "1995-02-25" ? "을해년 무인월 정해일 기유시" : `${date.split('-')[0]}년생`;
         state.userZodiac = date === "1995-02-25" ? "해" : JI[(new Date(date).getFullYear() - 4) % 12];
         await db.collection("users").doc(currentUser.uid).set({ userSaju: state.userSaju, userZodiac: state.userZodiac }, { merge: true });
@@ -296,7 +297,7 @@
     };
 
     function updateSajuBar() {
-        document.getElementById('displaySaju').innerText = state.userSaju || "로그인 후 사주를 설정해주세요";
+        document.getElementById('displaySaju').innerText = state.userSaju || "로그인 후 설정해주세요.";
         document.getElementById('displayZodiac').innerText = state.userZodiac || "-";
     }
 
@@ -322,10 +323,10 @@
             const data = doc.data();
             const sD = calculateShinsal(state.userZodiac, getAccurateGanji(dateStr).dayJi);
             const card = document.createElement('div');
-            card.className = "bg-white p-6 rounded-3xl border hover:border-indigo-300 shadow-sm transition-all cursor-pointer";
-            card.innerHTML = `<div class="flex justify-between items-center mb-4"><span class="text-[10px] font-bold text-slate-400">${dateStr}</span><span class="text-[10px] font-black text-indigo-500 uppercase">${sD}</span></div>
-                             <p class="font-bold text-sm mb-3 line-clamp-1">${data.mood} ${data.text}</p>`;
-            card.onclick = () => { state.date = dateStr; document.getElementById('datePicker').value = dateStr; switchTab('today'); loadToday(); };
+            card.className = "bg-white p-5 rounded-2xl border border-slate-100 shadow-sm active:scale-[0.98]";
+            card.innerHTML = `<div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold text-slate-400">${dateStr}</span><span class="text-[10px] font-black text-indigo-500 uppercase">${sD}</span></div>
+                             <p class="font-bold text-sm line-clamp-1">${data.mood} ${data.text}</p>`;
+            card.onclick = () => { state.date = dateStr; document.getElementById('datePicker').value = dateStr; switchTab('today'); loadToday(); window.scrollTo(0,0); };
             grid.appendChild(card);
         });
     }
