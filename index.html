@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>일진일기 v6.3 (Bug Fixed)</title>
-    <!-- Firebase SDK -->
+    <title>일진일기 v6.4 (Permission Fixed)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -25,7 +24,7 @@
         .mood-btn { font-size: 26px; filter: grayscale(1); opacity: 0.3; transition: all 0.3s; background: none; border: none; cursor: pointer; }
         .mood-selected { filter: grayscale(0); opacity: 1; transform: scale(1.2); }
         .btn-zakka { background-color: var(--md-olive); color: white; padding: 16px; border-radius: 12px; font-family: 'Nanum Myeongjo', serif; font-weight: 800; transition: all 0.1s; border: none; width: 100%; cursor: pointer; }
-        .btn-zakka:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-zakka:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.6; }
         .num-input { border: none; border-bottom: 2px solid var(--md-line); background: transparent; padding: 8px 4px; text-align: center; width: 100%; font-weight: 700; font-size: 18px; border-radius: 4px; color: var(--md-ink); }
         .guide-content { padding: 20px 24px 120px; }
         .guide-title { font-family: 'Nanum Myeongjo', serif; font-size: 19px; font-weight: 800; margin-bottom: 14px; color: var(--md-olive); border-bottom: 1px solid var(--md-line); padding-bottom: 8px; margin-top: 40px; }
@@ -66,7 +65,7 @@
                 <button id="quickEditBtn" onclick="switchTab('setting')" class="text-[9px] bg-white/80 px-2 py-0.5 rounded-md border border-[var(--md-olive)] text-[var(--md-olive)] font-bold">수정</button>
             </div>
             <div class="flex items-baseline gap-2">
-                <h2 id="displaySaju" class="font-bold text-[13.5px]">로그인이 필요합니다.</h2>
+                <h2 id="displaySaju" class="font-bold text-[13.5px]">데이터 로드 중...</h2>
                 <span id="displayZodiac" class="text-[10px] font-black opacity-60 underline decoration-double">-</span>
             </div>
             <span id="displayBirth" class="text-[10px] text-gray-400 font-medium tracking-tight"></span>
@@ -127,36 +126,39 @@
                     <button id="saveSettingBtn" class="btn-zakka">정보 업데이트</button>
                 </div>
             </div>
+            <div id="settingLoggedOut" class="py-20 text-center serif text-gray-400 font-bold">로그인 후 사주를 설정할 수 있습니다.</div>
         </main>
 
-        <main id="viewGuide" class="hidden">
+        <main id="viewGuide" class="hidden min-h-screen">
             <div class="guide-content">
                 <h2 class="guide-title serif">12신살이란?</h2>
-                <p class="guide-text">12신살(十二神殺)은 사주명리학에서 개인의 띠를 기준으로 마주하는 에너지의 흐름을 12단계로 구분한 것입니다...</p>
+                <p class="guide-text">12신살(十二神殺)은 사주명리학에서 개인의 띠를 기준으로 마주하는 특정 에너지의 흐름을 12단계로 구분한 것입니다...</p>
                 <h2 class="guide-title serif">24절기에 대해</h2>
-                <p class="guide-text">명리학의 한 해는 입춘(立春)부터입니다...</p>
+                <p class="guide-text">명리학에서 한 해의 시작은 양력 1월 1일이 아닌, 만물이 깨어나는 입춘(立春)부터입니다...</p>
                 <h2 class="guide-title serif">일진일기 쓰는 이유?</h2>
-                <p class="guide-text">기록을 통해 무의식적인 삶의 패턴을 발견해 보세요.</p>
+                <p class="guide-text">매일의 사건을 기록하고 그것을 명리학적 도표와 대조하는 습관은 무의식적인 삶의 패턴을 발견하도록 돕습니다.</p>
             </div>
         </main>
 
         <main id="viewPrivacy" class="p-8 hidden space-y-6 pb-40 bg-white min-h-screen">
-            <h2 class="serif text-xl font-bold border-b pb-4">Privacy Policy</h2>
-            <p class="text-sm">본 서비스는 사용자의 데이터를 Firebase 서버에 동기화 목적으로만 보관합니다.</p>
+            <h2 class="serif text-xl font-bold border-b pb-4 text-gray-800">Privacy Policy</h2>
+            <p class="text-[12.5px] leading-relaxed text-gray-500">본 서비스는 사용자의 데이터를 구글 Firebase 서버에 보관하며, 운영자가 열람하지 않습니다. 오직 '데이터 동기화' 목적으로만 활용됩니다.</p>
         </main>
     </div>
 
+    <!-- 하단 고정 저장 버튼 -->
     <div id="saveBtnContainer" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 bg-white/80 backdrop-blur-md border-t border-[var(--md-line)] z-20 block">
         <button id="saveBtn" class="btn-zakka shadow-lg">기록과 복기 완료</button>
     </div>
 
     <footer>
         <p>© 2026 일진일기 日辰日記. All rights reserved.</p>
-        <div class="mt-2 flex justify-center gap-4 underline"><button onclick="switchTab('privacy')">Privacy Policy</button></div>
+        <div class="mt-2 flex justify-center gap-4 underline font-bold"><button onclick="switchTab('privacy')">Privacy Policy</button></div>
     </footer>
 </div>
 
 <script>
+    // --- 설정 정보 ---
     const firebaseConfig = { apiKey: "AIzaSyCQ8SBHDdbsyQCM948YTla6He4WuBCBKAc", authDomain: "iljin-diary.firebaseapp.com", projectId: "iljin-diary", storageBucket: "iljin-diary.firebasestorage.app", messagingSenderId: "298218837896", appId: "1:298218837896:web:379c42a6ed7060e8c44c3d", measurementId: "G-CCLFP7XE0L" };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth(); const db = firebase.firestore(); const provider = new firebase.auth.GoogleAuthProvider();
@@ -174,7 +176,8 @@
     function getAccurateGanji(dateStr) {
         const target = new Date(dateStr); const iso = target.toISOString().split('T')[0];
         const base = new Date('2026-01-01'); const diff = Math.round((target - base) / 86400000);
-        const dIdx = (11 + diff) % 60; const dayGanji = GAN[dIdx % 10] + JI[dIdx % 12];
+        const dIdx = (11 + diff) % 60; // 을해(11) 기준
+        const dayGanji = GAN[dIdx % 10] + JI[dIdx % 12];
         const yearIdx = (iso < '2026-02-04') ? 41 : 42; 
         const mDates = ['2026-01-05', '2026-02-04', '2026-03-05', '2026-04-05', '2026-05-05', '2026-06-06', '2026-07-07', '2026-08-07', '2026-09-07', '2026-10-08', '2026-11-07', '2026-12-07'];
         let mIdx = 25; for(let i=0; i<mDates.length; i++) { if(iso >= mDates[i]) mIdx = 25 + i; }
@@ -192,12 +195,26 @@
 
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            currentUser = user; document.getElementById('loginBtn').classList.add('hidden'); document.getElementById('userInfo').classList.remove('hidden'); document.getElementById('userPhoto').src = user.photoURL;
-            document.getElementById('listLoggedIn').classList.remove('hidden'); document.getElementById('settingLoggedIn').classList.remove('hidden');
-            await loadUserData(); loadToday();
+            currentUser = user; 
+            document.getElementById('loginBtn').classList.add('hidden'); 
+            document.getElementById('userInfo').classList.remove('hidden'); 
+            document.getElementById('userPhoto').src = user.photoURL;
+            document.getElementById('listLoggedIn').classList.remove('hidden'); 
+            document.getElementById('listLoggedOut').classList.add('hidden'); 
+            document.getElementById('settingLoggedIn').classList.remove('hidden');
+            document.getElementById('settingLoggedOut').classList.add('hidden');
+            document.getElementById('diaryText').disabled = false;
+            await loadUserData(); 
+            loadToday();
         } else {
-            currentUser = null; document.getElementById('loginBtn').classList.remove('hidden'); document.getElementById('userInfo').classList.add('hidden');
-            document.getElementById('listLoggedIn').classList.add('hidden'); document.getElementById('settingLoggedIn').classList.add('hidden');
+            currentUser = null; 
+            document.getElementById('loginBtn').classList.remove('hidden'); 
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('listLoggedIn').classList.add('hidden'); 
+            document.getElementById('listLoggedOut').classList.remove('hidden'); 
+            document.getElementById('settingLoggedIn').classList.add('hidden');
+            document.getElementById('settingLoggedOut').classList.remove('hidden');
+            document.getElementById('diaryText').disabled = true;
             state.userSaju = ''; state.userZodiac = ''; loadToday();
         }
     });
@@ -225,13 +242,22 @@
             const doc = await db.collection("users").doc(currentUser.uid).collection("diaries").doc(state.date).get();
             if (doc.exists) { const s = doc.data(); dD = { text: s.text, mood: s.mood }; sD = { memo: s.studyMemo }; }
         }
-        document.getElementById('diaryText').value = dD.text; document.getElementById('studyMemo').value = sD.memo || ""; state.currentMood = dD.mood;
+        document.getElementById('diaryText').value = dD.text; 
+        document.getElementById('studyMemo').value = sD.memo || ""; 
+        state.currentMood = dD.mood;
         const g = getAccurateGanji(state.date);
-        document.getElementById('ganjiYear').innerText = g.yG; document.getElementById('ganjiMonth').innerText = g.mG; document.getElementById('ganjiDay').innerText = g.dG;
-        const sY = calculateShinsal(state.userZodiac, g.yJ); const sM = calculateShinsal(state.userZodiac, g.mJ); const sDay = calculateShinsal(state.userZodiac, g.dJ);
-        document.getElementById('shinsalYear').innerText = sY; document.getElementById('shinsalMonth').innerText = sM; document.getElementById('shinsalDay').innerText = sDay;
+        document.getElementById('ganjiYear').innerText = g.yG; 
+        document.getElementById('ganjiMonth').innerText = g.mG; 
+        document.getElementById('ganjiDay').innerText = g.dG;
+        const sY = calculateShinsal(state.userZodiac, g.yJ); 
+        const sM = calculateShinsal(state.userZodiac, g.mJ); 
+        const sDay = calculateShinsal(state.userZodiac, g.dJ);
+        document.getElementById('shinsalYear').innerText = sY; 
+        document.getElementById('shinsalMonth').innerText = sM; 
+        document.getElementById('shinsalDay').innerText = sDay;
         document.getElementById('termBadge').innerText = `현재 절기 : ${g.termName}(${g.termDate})`;
-        updateSajuBar(); updateMoodButtons();
+        updateSajuBar(); 
+        updateMoodButtons();
         const ins = document.getElementById('insightSection');
         if(dD.text && dD.mood) { ins.style.opacity = "1"; document.getElementById('aiComment').innerHTML = `<span class="serif text-[var(--md-olive)] font-bold italic">Mentor Insight: 오늘의 ${sDay}</span><br><br>${SHINSAL_INSIGHTS[sDay]}`; }
         else { ins.style.opacity = "0.3"; document.getElementById('aiComment').innerText = "기록을 남겨주시면 통찰을 읽어드릴게요."; }
@@ -242,6 +268,7 @@
         ['viewToday','viewList','viewSetting','viewGuide','viewPrivacy'].forEach(v => document.getElementById(v).classList.toggle('hidden', v !== 'view'+tab.charAt(0).toUpperCase()+tab.slice(1)));
         document.getElementById('saveBtnContainer').classList.toggle('hidden', tab !== 'today');
         if(tab === 'list') renderHistory();
+        window.scrollTo(0,0);
     }
 
     document.getElementById('saveSettingBtn').onclick = async () => {
@@ -254,8 +281,11 @@
         btn.disabled = true; btn.innerText = "저장 중...";
         
         state.userBirth = { y, m, d, h, min };
+        // 띠 계산 보정 (1994년 등 임의 년도 대응)
+        const zodiacs = ["신(원숭이)","유(닭)","술(개)","해(돼지)","자(쥐)","축(소)","인(호랑이)","묘(토끼)","진(용)","사(뱀)","오(말)","미(양)"];
+        const zodText = zodiacs[parseInt(y)%12];
+        state.userZodiac = zodText.split('(')[0];
         state.userSaju = (y=='1995'&&m=='2'&&d=='25') ? "을해년 무인월 정해일 기유시" : `${y}년 ${m}월 ${d}일생 명식`;
-        state.userZodiac = JI[(parseInt(y)-4)%12]; 
 
         try {
             await db.collection("users").doc(currentUser.uid).set({ 
@@ -282,7 +312,6 @@
         bz.innerText = `${state.userZodiac}(${JI_K[state.userZodiac] || ''})`;
     }
 
-    // --- 기타 유틸 ---
     async function renderHistory() {
         if (!currentUser) return; const grid = document.getElementById('historyGrid');
         const snap = await db.collection("users").doc(currentUser.uid).collection("diaries").orderBy("updatedAt", "desc").get();
@@ -294,9 +323,11 @@
             card.onclick = () => { state.date = dStr; document.getElementById('datePicker').value = dStr; switchTab('today'); loadToday(); }; grid.appendChild(card);
         });
     }
+
     document.getElementById('loginBtn').onclick = () => auth.signInWithPopup(provider);
     document.getElementById('logoutBtn').onclick = () => { localStorage.clear(); auth.signOut().then(() => location.reload()); };
     document.getElementById('saveBtn').onclick = async () => {
+        if(!currentUser) return alert('로그인이 필요합니다.');
         const text = document.getElementById('diaryText').value; const memo = document.getElementById('studyMemo').value;
         if(!state.currentMood || !text) return alert('기록을 입력하세요.');
         await db.collection("users").doc(currentUser.uid).collection("diaries").doc(state.date).set({ text, mood: state.currentMood, studyMemo: memo, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
